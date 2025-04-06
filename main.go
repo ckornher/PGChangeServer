@@ -91,7 +91,7 @@ func (s *server) StartStream(req *pb.StreamRequest, stream pb.DatabaseChangeStre
 	return nil
 }
 
-func (s *server) StopStream(ctx context.Context, _ *pb.StopRequest) (*pb.StopResponse, error) {
+func (s *server) StopStream(_ context.Context, _ *pb.StopRequest) (*pb.StopResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if !s.isRunning {
@@ -463,7 +463,10 @@ func (s *server) cleanup() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.conn != nil {
-		s.conn.Close(context.Background())
+		err := s.conn.Close(context.Background())
+		if err != nil {
+			s.logError("Ignoring error on closing connection", err)
+		}
 		s.conn = nil
 	}
 	s.isRunning = false
